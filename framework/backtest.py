@@ -11,13 +11,14 @@ class BackTest:
         self.broker = Broker(self.portfolio, start)
         self.strategy.broker = self.broker
         self.feed = MultiDataFeed(self.portfolio, time_frame)
+        self.strategy.feed = self.feed
     
     def run(self):
         while self.feed.has_next():
             data = self.feed.next()
             self.broker.update(data[:,3])
-            self.strategy.update(data)
             self.broker.log()
+            self.strategy.update(data)
             
     def show_portfolio(self):
         data = [x["value"] for x in self.broker.history]

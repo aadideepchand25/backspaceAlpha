@@ -3,6 +3,7 @@ class Strategy:
     def __init__(self):
         self.portfolio = []
         self.broker = None
+        self.feed = None
         
     def init(self):
         pass

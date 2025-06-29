@@ -39,7 +39,8 @@ class MultiDataFeed:
         return out
             
     def previous(self, num):
-        out = np.zeros((len(self.feeds), num, 5))
+        a = max(0, min([x.index for x in self.feeds])-num)
+        out = np.zeros((len(self.feeds), a, 5))
         for i, feed in enumerate(self.feeds):
-            out[i,:,:] = feed.previous(num)
+            out[i,:,:] = feed.previous(a)
         return out
