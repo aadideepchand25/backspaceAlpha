@@ -8,7 +8,7 @@ class Broker:
         self.order = {ticker: [] for ticker in portfolio}
         self.open = {ticker: [] for ticker in portfolio}
         self.hedging = hedging
-        self.time = 0
+        self.time = -1
         if not verbose:
             import builtins
             builtins.print = lambda *args, **kwargs: None
@@ -24,11 +24,13 @@ class Broker:
                 if action == "LNG":
                     if price > tp or price < sl:
                         self.cash += share * price
+                        self.order[t].append(("CLS", id))
                         self.open[t].remove(pos)
                         print(f"(t = {self.time}) Order ID: {id} - Automatic close triggered successfully")
                 elif action == "SHT":
                     if price < tp or price > sl:
                         self.cash -= share * price
+                        self.order[t].append(("CLS", id))
                         self.open[t].remove(pos)
                         print(f"(t = {self.time}) Order ID: {id} - Automatic close triggered successfully")
         
@@ -56,12 +58,12 @@ class Broker:
                 margin = len(f"(t = {self.time}) ")
                 for o in orders:
                     print(f"{' '*margin}{o}")
-                self.order[t] = []
                 continue
             print(f"(t = {self.time}) ERROR - Could not process order book ({t}): Invalid cash or shares to execute orderbook")
    
+        self.log()
+        self.order = {ticker: [] for ticker in self.tickers}
         self.time += 1
-        print()
 
     def buy(self, ticker, share):
         self.order[ticker].append(("B", share))
@@ -72,14 +74,20 @@ class Broker:
     def long(self, ticker, share, id, tp, sl):
         if not self.hedging and "SHT" in [o[0] for o in self.open[ticker]]:
             print(f"(t = {self.time}) ERROR - Could not process order book: Attempting to maintain long and short position without hedging mode")
-        else:
-            self.order[ticker].append(("LNG", share, id, float(tp), float(sl), self.price[ticker]))
+            return
+        if id in [o[2] for o in self.open[ticker]]:
+            print(f"(t = {self.time}) ERROR - Could not process order book: Attempting to reuse existing ID")
+            return
+        self.order[ticker].append(("LNG", share, id, float(tp), float(sl), self.price[ticker]))
             
     def short(self, ticker, share, id, tp, sl):
         if not self.hedging and "LNG" in [o[0] for o in self.open[ticker]]:
             print(f"(t = {self.time}) ERROR - Could not process order book: Attempting to maintain long and short position without hedging mode")
-        else:
-            self.order[ticker].append(("SHT", share, id, float(tp), float(sl), self.price[ticker]))
+            return
+        if id in [o[2] for o in self.open[ticker]]:
+            print(f"(t = {self.time}) ERROR - Could not process order book: Attempting to reuse existing ID")
+            return
+        self.order[ticker].append(("SHT", share, id, float(tp), float(sl), self.price[ticker]))
             
     def close(self, id):
         for t, positions in self.open.items():
@@ -89,12 +97,17 @@ class Broker:
                     price = self.price[t]
                     if action == "LNG":
                         self.cash += share * price
+                        self.order[t].append(("CLS", id))
                         self.open[t].remove(pos)
                         print(f"(t = {self.time}) Order ID: {id} - Manual close completed successfully")
+                        return
                     elif action == "SHT":
                         self.cash -= share * price
+                        self.order[t].append(("CLS", id))
                         self.open[t].remove(pos)
                         print(f"(t = {self.time}) Order ID: {id} - Manual close completed successfully")
+                        return
+        print(f"(t = {self.time}) ERROR - Was unable to find an order with that ID")
 
     def value(self):
         value = [self.portfolio[t] * self.price[t] for t in self.tickers]
