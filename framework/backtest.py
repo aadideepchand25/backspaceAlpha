@@ -21,7 +21,7 @@ class BackTest:
             self.strategy.update(data)
             
     def show_portfolio(self):
-        data = [x["value"] for x in self.broker.history]
+        data = [x["equity"] for x in self.broker.history]
         plt.figure(figsize=(10, 5))
         plt.plot(data)
         plt.title("Equity Curve")
