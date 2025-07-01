@@ -1,3 +1,5 @@
+import numpy as np
+
 class Broker:
     def __init__(self, portfolio, initial, hedging = False, verbose = True):
         self.cash = initial
@@ -8,14 +10,20 @@ class Broker:
         self.order = {ticker: [] for ticker in portfolio}
         self.open = {ticker: [] for ticker in portfolio}
         self.hedging = hedging
-        self.time = -1
+        self.time = 0
+        self.first = True
         if not verbose:
             import builtins
             builtins.print = lambda *args, **kwargs: None
-        
-    def update(self, data):
+            
+    def update_price(self, data):
         self.price = dict(zip(self.tickers, data))
+        if self.first:
+            self.log()
+            self.first = False
+        self.time += 1
         
+    def update(self):
         #Process open positions
         for t, positions in self.open.items():
             price = self.price[t]
@@ -63,7 +71,6 @@ class Broker:
    
         self.log()
         self.order = {ticker: [] for ticker in self.tickers}
-        self.time += 1
 
     def buy(self, ticker, share):
         self.order[ticker].append(("B", share))
@@ -109,21 +116,36 @@ class Broker:
                         return
         print(f"(t = {self.time}) ERROR - Was unable to find an order with that ID")
 
-    def value(self):
-        value = [self.portfolio[t] * self.price[t] for t in self.tickers]
-        for i, t in enumerate(self.tickers):
+    def open_value(self):
+        value = []
+        for t in self.tickers:
             price = self.price[t]
+            val = 0
             for p in self.open[t]:
                 if p[0] == "SHT":
-                    value[i] += (p[5] - price) * p[1]
+                    val += (p[5] - price) * p[1]
                 elif p[0] == "LNG":
-                    value[i] += (price - p[5]) * p[1]
-        return value
+                    val += (price - p[5]) * p[1]
+            value.append(val)
+        return np.array(value)
+    
+    def value(self):
+        value = []
+        for t in self.tickers:
+            price = self.price[t]
+            val = self.portfolio[t] * price
+            for p in self.open[t]:
+                if p[0] == "SHT":
+                    val -= p[1] * price
+                elif p[0] == "LNG":
+                    val += p[1] * price
+            value.append(val)
+        return np.array(value)
 
     def log(self):
         self.history.append({
             'equity': self.cash + sum(self.value()),
-            'portfolio': self.value(),
+            'portfolio': self.open_value(),
             'current': [self.price[t] for t in self.tickers],
             'orders': self.order
         })

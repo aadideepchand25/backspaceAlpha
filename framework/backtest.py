@@ -2,6 +2,7 @@ from loader import MultiDataFeed
 from broker import Broker
 from strategy import Strategy
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
 import numpy as np
 
 class BackTest:
@@ -16,16 +17,20 @@ class BackTest:
         self.strategy.feed = self.feed
     
     def run(self):
+        first = True
         while self.feed.has_next():
             data = self.feed.next()
-            self.broker.update(data[:,3])
+            self.broker.update_price(data[:,3])
             self.strategy.update(data)
+            self.broker.update()
             
     def show_portfolio(self):
         data = [x["equity"] for x in self.broker.history]
-        plt.figure(figsize=(10, 5))
-        plt.plot(data)
-        plt.title("Equity Curve")
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(data)
+        formatter = ScalarFormatter(useOffset=False)
+        ax.yaxis.set_major_formatter(formatter)
+        plt.title(f"{self.strategy.name} - Portfolio Value")
         plt.xlabel("Time Step")
         plt.ylabel("Portfolio Value")
         plt.grid(True)
@@ -37,9 +42,9 @@ class BackTest:
         plt.figure(figsize=(10, 5))
         for i in range(data.shape[1]):
             plt.plot(data[:, i], label=self.portfolio[i])
-        plt.title("Portfolio Distribution")
+        plt.title(f"{self.strategy.name} - Portfolio Distribution")
         plt.xlabel("Time Step")
-        plt.ylabel("Stock Value")
+        plt.ylabel("PnL of Open Positions")
         plt.grid(True)
         plt.show()
 
@@ -53,7 +58,6 @@ class BackTest:
         plt.figure(figsize=(10, 5))
         plt.plot(data)
         for t, a in orders:
-            t -= 1
             for order in a:
                 if order[0] == "B" or order[0] == "LNG":
                     plt.scatter(t, data[t] - distance, marker='^', color='green', label=order[1], s=100)
