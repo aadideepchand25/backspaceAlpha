@@ -22,6 +22,10 @@ class Broker:
             self.log()
             self.first = False
         self.time += 1
+    
+    def fee(self, shares):
+        fee = max(shares * 0.005, 1)
+        return fee
         
     def update(self):
         #Process open positions
@@ -58,7 +62,7 @@ class Broker:
             sell = sum([o[1] for o in orders if o[0] == "S"])  
             short = [o for o in orders if o[0] == "SHT"]
             price = self.price[t]
-            if self.cash >= (buy + sum([l[1] for l in long]) + (sum([s[1] for s in short]) * 1.5)) * price and self.portfolio[t] + buy >= sell:
+            if self.cash >= self.fee(buy + sell + sum([l[1] for l in long]) + sum([s[1] for s in short])) + ((buy + sum([l[1] for l in long]) + (sum([s[1] for s in short]) * 1.5)) * price) and self.portfolio[t] + buy >= sell:
                 self.cash += (sell - buy + sum([s[1] for s in short]) - sum([l[1] for l in long])) * price
                 self.portfolio[t] += (buy - sell)
                 self.open[t] += short + long

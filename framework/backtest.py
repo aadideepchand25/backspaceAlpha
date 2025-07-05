@@ -1,28 +1,37 @@
-from loader import MultiDataFeed
-from broker import Broker
-from strategy import Strategy
+from .loader import MultiDataFeed
+from .broker import Broker
+from .strategy import Strategy
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 import numpy as np
+from tqdm import tqdm
 
 class BackTest:
-    def __init__(self, strategy: Strategy, time_frame, start=10000):
+    def __init__(self, strategy: Strategy, time_frame, start=10000, source="YAHOO", interval="1D", verbose=True, hedging=False):
         self.start = start
         self.strategy = strategy
+        self.verbose = verbose
         self.strategy.init()
         self.portfolio = self.strategy.portfolio
-        self.broker = Broker(self.portfolio, start)
+        self.broker = Broker(self.portfolio, start, verbose=verbose, hedging=hedging)
         self.strategy.broker = self.broker
-        self.feed = MultiDataFeed(self.portfolio, time_frame)
+        self.feed = MultiDataFeed(self.portfolio, time_frame, source, interval)
         self.strategy.feed = self.feed
     
     def run(self):
-        first = True
+        pbar = None
+        if not self.verbose:
+            pbar = tqdm(total=self.feed.feeds[0].length, ncols=70, desc="Running Backtest")
         while self.feed.has_next():
             data = self.feed.next()
             self.broker.update_price(data[:,3])
             self.strategy.update(data)
             self.broker.update()
+            if not self.verbose:
+                pbar.update(1)
+        if not self.verbose:
+            pbar.close()
+    
             
     def show_portfolio(self):
         data = [x["equity"] for x in self.broker.history]
@@ -97,5 +106,5 @@ class BackTest:
         
     def show_results(self):
         final = self.broker.history[len(self.broker.history)-1]
-        print(f"\n\nRESULTS - {self.strategy.name}:")
-        print(f"Profit: £{final['equity']-self.start}")
+        tqdm.write(f"\n\nRESULTS - {self.strategy.name}:")
+        tqdm.write(f"Profit: £{final['equity']-self.start}")
