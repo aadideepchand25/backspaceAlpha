@@ -69,7 +69,6 @@ class Broker:
                         print(f"(t = {self.time}) Order ID: {id} - Automatic close triggered successfully")
         
         #Handle current orderbook state and checks for conflicts in the orderbook before processing
-        #NOTE: When checking conflicts, need to check they are on the same ticker
         for t, orders in self.order.items():
             if len(orders) == 0:
                 continue
