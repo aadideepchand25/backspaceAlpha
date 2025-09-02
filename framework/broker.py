@@ -1,6 +1,14 @@
 import numpy as np
 
 class Broker:
+    '''
+    This class controls the broker which handles all flow of cash throughout the trading simulation
+    Can set variables such as:
+    - hedging (Allows you to place multiple orders in the same time frame that conflict each other and aggregate them)
+    - verbose (Allows the console logs to show more information about the orders)
+    - fee():  (Used to control how fees are calculated. Can adjust based on preference)
+    The strategy uses this class to place orders
+    '''
     def __init__(self, portfolio, initial, hedging = False, verbose = True):
         self.cash = initial
         self.tickers = portfolio
@@ -17,6 +25,10 @@ class Broker:
             builtins.print = lambda *args, **kwargs: None
             
     def update_price(self, data):
+        '''
+        Function meant to be used by backtest class to feed fresh data to the broker
+        Means the broker always has the latest prices
+        '''
         self.price = dict(zip(self.tickers, data))
         if self.first:
             self.log()
@@ -24,11 +36,21 @@ class Broker:
         self.time += 1
     
     def fee(self, shares):
+        '''
+        This function defines how extra fees on every order is calculated. 
+        Currently set to an industry standard
+        '''
         fee = max(shares * 0.005, 1)
         return fee
         
     def update(self):
-        #Process open positions
+        '''
+        This function handles the bulk of the brokers operations and does everything a broker does:
+        - Checks open positions (sees whether they have hit a take profit or stop loss)
+        - Processes the current state of the orderbook (handles new incoming orders and clear the orderbook)
+        '''
+        
+        #Handles any open positions and checks if stop losses or take profits have been triggered
         for t, positions in self.open.items():
             price = self.price[t]
             for pos in positions[:]:
@@ -46,7 +68,8 @@ class Broker:
                         self.open[t].remove(pos)
                         print(f"(t = {self.time}) Order ID: {id} - Automatic close triggered successfully")
         
-        #Handle current orderbook state
+        #Handle current orderbook state and checks for conflicts in the orderbook before processing
+        #NOTE: When checking conflicts, need to check they are on the same ticker
         for t, orders in self.order.items():
             if len(orders) == 0:
                 continue
@@ -77,12 +100,21 @@ class Broker:
         self.order = {ticker: [] for ticker in self.tickers}
 
     def buy(self, ticker, share):
+        '''
+        Used to do a basic buy of a share
+        '''
         self.order[ticker].append(("B", share))
     
     def sell(self, ticker, share):
+        '''
+        Used to do a basic sell of a share
+        '''
         self.order[ticker].append(("S", share))     
             
     def long(self, ticker, share, id, tp, sl):
+        '''
+        Used to do go long on a share with take profits and stop losses
+        '''
         if not self.hedging and "SHT" in [o[0] for o in self.open[ticker]]:
             print(f"(t = {self.time}) ERROR - Could not process order book: Attempting to maintain long and short position without hedging mode")
             return
@@ -92,6 +124,9 @@ class Broker:
         self.order[ticker].append(("LNG", share, id, float(tp), float(sl), self.price[ticker]))
             
     def short(self, ticker, share, id, tp, sl):
+        '''
+        Used to do go short on a share with take profits and stop losses
+        '''
         if not self.hedging and "LNG" in [o[0] for o in self.open[ticker]]:
             print(f"(t = {self.time}) ERROR - Could not process order book: Attempting to maintain long and short position without hedging mode")
             return
@@ -101,6 +136,9 @@ class Broker:
         self.order[ticker].append(("SHT", share, id, float(tp), float(sl), self.price[ticker]))
             
     def close(self, id):
+        '''
+        Used to do close any position by the associated id tag
+        '''
         for t, positions in self.open.items():
             for pos in positions[:]:
                 action, share, name, tp, sl, p = pos
@@ -121,6 +159,9 @@ class Broker:
         print(f"(t = {self.time}) ERROR - Was unable to find an order with that ID")
 
     def open_value(self):
+        '''
+        Function used when calculating portfolio value to check value of open positions (held assets)
+        '''
         value = []
         for t in self.tickers:
             price = self.price[t]
@@ -134,6 +175,9 @@ class Broker:
         return np.array(value)
     
     def value(self):
+        '''
+        Function used when calculating equity to check price of open positions (held assets)
+        '''
         value = []
         for t in self.tickers:
             price = self.price[t]

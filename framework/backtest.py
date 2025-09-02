@@ -7,6 +7,15 @@ import numpy as np
 from tqdm import tqdm
 
 class BackTest:
+    '''
+    This class is used to bring everything together and run the backtest on it. The heart of the modular system
+    Allows you to run the backtest on a strategy and provides some graphs to show results:
+    - Portfolio Value vs Time               (shows overall how portfolio performed)
+    - Portfolio Distribution vs Time        (shows PnL of different stocks in the portfolio over time)
+    - Ticker Value vs Time                  (shows when trades were made on a ticker as its price changed)
+    - Overall                               (shows results of the strategy (profit))
+    - Will be adding more values and metrics soon...
+    '''
     def __init__(self, strategy: Strategy, time_frame, start=10000, source="YAHOO", interval="1D", verbose=True, hedging=False):
         self.start = start
         self.strategy = strategy
@@ -19,6 +28,13 @@ class BackTest:
         self.strategy.feed = self.feed
     
     def run(self):
+        '''
+        Heart of the backtest and does the basic loop:
+        - Updates data feed by 1 tick
+        - Sends data to broker first
+        - Then strategy
+        - Allows broker to respond to new orders from strategy
+        '''
         pbar = None
         if not self.verbose:
             pbar = tqdm(total=self.feed.feeds[0].length, ncols=70, desc="Running Backtest")
