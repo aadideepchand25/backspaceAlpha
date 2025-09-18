@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 import numpy as np
 from tqdm import tqdm
+from datetime import datetime
 
 class BackTest:
     '''
@@ -135,6 +136,10 @@ class MultiBackTest:
         if len(strategy) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")
             return
+        start_dt = datetime.strptime(time_frame[0], '%Y-%m-%d')
+        end_dt   = datetime.strptime(time_frame[1], '%Y-%m-%d')
+        delta_days = (end_dt - start_dt).days
+        self.years = delta_days / 365.25
     
     def run(self):
         if len(self.names) == 0:
@@ -175,7 +180,7 @@ class MultiBackTest:
         if len(self.names) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")
             return
-        results = [ ["","Start [$]","Final [$]","Peak [$]","Profit [$]","Return [%]"] ]
+        results = [ ["","Start [$]","Final [$]","Peak [$]","Profit [$]","Return [%]", "Return (CAGR) [%]"] ]
         for backtest in self.backtests:
             result = []
             result.append(backtest.strategy.name)
@@ -185,6 +190,7 @@ class MultiBackTest:
             result.append(max([x["equity"] for x in backtest.broker.history]))
             result.append(final - backtest.start)
             result.append(((final - backtest.start)/backtest.start)*100)
+            result.append((((final/backtest.start)**(1/self.years))-1)*100)
             results.append(result)
         data = list(zip(*results))
         spacing = np.max([len(x) for x in data[0]])
