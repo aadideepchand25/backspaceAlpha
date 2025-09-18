@@ -55,18 +55,19 @@ class Broker:
             price = self.price[t]
             for pos in positions[:]:
                 action, share, id, tp, sl, p = pos
-                if action == "LNG":
-                    if price > tp or price < sl:
-                        self.cash += share * price
-                        self.order[t].append(("CLS", id))
-                        self.open[t].remove(pos)
-                        print(f"(t = {self.time}) Order ID: {id} - Automatic close triggered successfully")
-                elif action == "SHT":
-                    if price < tp or price > sl:
-                        self.cash -= share * price
-                        self.order[t].append(("CLS", id))
-                        self.open[t].remove(pos)
-                        print(f"(t = {self.time}) Order ID: {id} - Automatic close triggered successfully")
+                if tp != "NA" and sl != "NA":
+                    if action == "LNG":
+                        if price > tp or price < sl:
+                            self.cash += share * price
+                            self.order[t].append(("CLS", id))
+                            self.open[t].remove(pos)
+                            print(f"(t = {self.time}) Order ID: {id} - Automatic close triggered successfully")
+                    elif action == "SHT":
+                        if price < tp or price > sl:
+                            self.cash -= share * price
+                            self.order[t].append(("CLS", id))
+                            self.open[t].remove(pos)
+                            print(f"(t = {self.time}) Order ID: {id} - Automatic close triggered successfully")
         
         #Handle current orderbook state and checks for conflicts in the orderbook before processing
         for t, orders in self.order.items():
@@ -110,7 +111,7 @@ class Broker:
         '''
         self.order[ticker].append(("S", share))     
             
-    def long(self, ticker, share, id, tp, sl):
+    def long(self, ticker, share, id, tp="NA", sl="NA"):
         '''
         Used to do go long on a share with take profits and stop losses
         '''
@@ -120,9 +121,13 @@ class Broker:
         if id in [o[2] for o in self.open[ticker]]:
             print(f"(t = {self.time}) ERROR - Could not process order book: Attempting to reuse existing ID")
             return
-        self.order[ticker].append(("LNG", share, id, float(tp), float(sl), self.price[ticker]))
+        if not isinstance(tp, (int, float)):
+            tp = "NA"
+        if not isinstance(sl, (int, float)):
+            sl = "NA"
+        self.order[ticker].append(("LNG", share, id, tp, sl, self.price[ticker]))
             
-    def short(self, ticker, share, id, tp, sl):
+    def short(self, ticker, share, id, tp="NA", sl="NA"):
         '''
         Used to do go short on a share with take profits and stop losses
         '''
@@ -132,7 +137,11 @@ class Broker:
         if id in [o[2] for o in self.open[ticker]]:
             print(f"(t = {self.time}) ERROR - Could not process order book: Attempting to reuse existing ID")
             return
-        self.order[ticker].append(("SHT", share, id, float(tp), float(sl), self.price[ticker]))
+        if not isinstance(tp, (int, float)):
+            tp = "NA"
+        if not isinstance(sl, (int, float)):
+            sl = "NA"
+        self.order[ticker].append(("SHT", share, id, tp, sl, self.price[ticker]))
             
     def close(self, id):
         '''

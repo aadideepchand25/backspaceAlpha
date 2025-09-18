@@ -178,7 +178,7 @@ class MultiDataFeed(BaseDataFeed):
         return out
             
     def previous(self, num):
-        a = max(0, min([x.index for x in self.feeds])-num)
+        a = min(min([x.index for x in self.feeds]),num)
         out = np.zeros((len(self.feeds), a, 5))
         for i, feed in enumerate(self.feeds):
             out[i,:,:] = feed.previous(a)
