@@ -1,7 +1,5 @@
-from strategies.BuyAndHoldSPYStrategy import BuyAndHoldSPYStrategy
-from strategies.MeanReversionStrategy import MeanReversionStrategy
-from strategies.PairsTradingStrategy import PairsTradingStrategy
-import framework as f
+from backspaceAlpha.framework import BackTest
+from backspaceAlpha.examples import PairsTradingStrategy, MeanReversionStrategy, BuyAndHoldSPYStrategy
 
 '''
 Quick example to show how to use the backtester to run the simulation and then show results
@@ -10,7 +8,7 @@ Can process a backtest of 5 years on a 1 day timeframe in about a few seconds wi
 
 #Run the backtest on multiple strategies simultaneously
 strategies = [PairsTradingStrategy(),MeanReversionStrategy(),BuyAndHoldSPYStrategy()]
-backtest = f.MultiBackTest(strategies, ('2000-01-01', '2025-01-01'), 10000, "YAHOO", "1D", verbose=False)
+backtest = BackTest(strategies, ('2000-01-01', '2025-01-01'), 10000, "YAHOO", "1D", verbose=False)
 backtest.run()
 
 #Show graphs for the results of the backtest

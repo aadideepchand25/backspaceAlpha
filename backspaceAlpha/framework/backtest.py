@@ -7,7 +7,7 @@ import numpy as np
 from tqdm import tqdm
 from datetime import datetime
 
-class BackTest:
+class BaseBackTest:
     '''
     This class is used to bring everything together and run the backtest on it. The heart of the modular system
     Allows you to run the backtest on a strategy and provides some graphs to show results:
@@ -126,12 +126,12 @@ class BackTest:
         tqdm.write(f"\n\nRESULTS - {self.strategy.name}:")
         tqdm.write(f"Profit: £{final['equity']-self.start}")
         
-class MultiBackTest:
+class BackTest:
     def __init__(self, strategy: [Strategy], time_frame, start=10000, source="YAHOO", interval="1D", verbose=True, hedging=False):
         self.backtests = []    
         self.verbose = verbose    
         for strat in strategy:
-            self.backtests.append(BackTest(strat, time_frame, start, source, interval, verbose, hedging))
+            self.backtests.append(BaseBackTest(strat, time_frame, start, source, interval, verbose, hedging))
         self.names = [x.strategy.name for x in self.backtests]
         if len(strategy) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")

@@ -1,4 +1,4 @@
-from framework import Strategy
+from backspaceAlpha.framework.strategy import Strategy
 import numpy as np
 
 class PairsTradingStrategy(Strategy):
