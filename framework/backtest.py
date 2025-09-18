@@ -176,7 +176,7 @@ class MultiBackTest:
         if len(self.names) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")
             return
-        if name not in names:
+        if name not in self.names:
             print("ERROR - Please ensure the given strategy was present in the backtest")
             return
         i = self.names.index(name)
@@ -189,7 +189,7 @@ class MultiBackTest:
         plt.figure(figsize=(10, 5))
         name = ""
         for variable in variable_names:
-            if variable["strategy"] not in names:
+            if variable["strategy"] not in self.names:
                 print("ERROR - Please ensure the given strategy was present in the backtest")
                 return
             i = self.names.index(variable["strategy"])
@@ -210,17 +210,21 @@ class MultiBackTest:
         if len(self.names) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")
             return
-        results = [ ["","Start [$]","Final [$]","Peak [$]","Profit [$]","Return [%]", "Return (CAGR) [%]"] ]
+        results = [ ["","Start [$]","Final [$]","Peak [$]","Profit [$]","Return [%]", "Return (CAGR) [%]", "Max Drawdown [%]"] ]
         for backtest in self.backtests:
             result = []
+            data = [x["equity"] for x in backtest.broker.history]
             result.append(backtest.strategy.name)
             result.append(backtest.start)
-            final = backtest.broker.history[len(backtest.broker.history)-1]["equity"]
+            final = data[len(backtest.broker.history)-1]
             result.append(final)
-            result.append(max([x["equity"] for x in backtest.broker.history]))
+            result.append(max(data))
             result.append(final - backtest.start)
             result.append(((final - backtest.start)/backtest.start)*100)
             result.append((((final/backtest.start)**(1/self.years))-1)*100)
+            running_max = np.maximum.accumulate(data)
+            drawdowns = (data - running_max) / running_max
+            result.append(drawdowns.min()*100)
             results.append(result)
         data = list(zip(*results))
         spacing = np.max([len(x) for x in data[0]])
