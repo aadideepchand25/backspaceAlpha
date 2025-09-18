@@ -27,7 +27,7 @@ class BackTest:
         self.feed = MultiDataFeed(self.portfolio, time_frame, source, interval)
         self.strategy.feed = self.feed
     
-    def run(self):
+    def run(self, pbar = None):
         '''
         Heart of the backtest and does the basic loop:
         - Updates data feed by 1 tick
@@ -35,8 +35,7 @@ class BackTest:
         - Then strategy
         - Allows broker to respond to new orders from strategy
         '''
-        pbar = None
-        if not self.verbose:
+        if not self.verbose and pbar is None:
             pbar = tqdm(total=self.feed.feeds[0].length, ncols=70, desc="Running Backtest")
         while self.feed.has_next():
             data = self.feed.next()
@@ -45,7 +44,7 @@ class BackTest:
             self.broker.update()
             if not self.verbose:
                 pbar.update(1)
-        if not self.verbose:
+        if not self.verbose and pbar is None:
             pbar.close()
     
             
@@ -67,6 +66,7 @@ class BackTest:
         plt.figure(figsize=(10, 5))
         for i in range(data.shape[1]):
             plt.plot(data[:, i], label=self.portfolio[i])
+        plt.legend()
         plt.title(f"{self.strategy.name} - Portfolio Distribution")
         plt.xlabel("Time Step")
         plt.ylabel("PnL of Open Positions")
@@ -124,3 +124,84 @@ class BackTest:
         final = self.broker.history[len(self.broker.history)-1]
         tqdm.write(f"\n\nRESULTS - {self.strategy.name}:")
         tqdm.write(f"Profit: £{final['equity']-self.start}")
+        
+class MultiBackTest:
+    def __init__(self, strategy: [Strategy], time_frame, start=10000, source="YAHOO", interval="1D", verbose=True, hedging=False):
+        self.backtests = []    
+        self.verbose = verbose    
+        for strat in strategy:
+            self.backtests.append(BackTest(strat, time_frame, start, source, interval, verbose, hedging))
+        self.names = [x.strategy.name for x in self.backtests]
+        if len(strategy) == 0:
+            print("ERROR - Please ensure there are valid strategies to backtest")
+            return
+    
+    def run(self):
+        if len(self.names) == 0:
+            print("ERROR - Please ensure there are valid strategies to backtest")
+            return
+        pbar = None
+        if not self.verbose:
+            lengths = [x.feed.feeds[0].length for x in self.backtests]
+            pbar = tqdm(total=np.sum(lengths), ncols=70, desc="Running Backtest")
+        for backtest in self.backtests:
+            backtest.run(pbar)
+        if not self.verbose:
+            pbar.close()
+    
+    def show_portfolio(self):
+        if len(self.names) == 0:
+            print("ERROR - Please ensure there are valid strategies to backtest")
+            return
+        plt.figure(figsize=(10, 5))
+        for i in range(len(self.backtests)):
+            data = [x["equity"] for x in self.backtests[i].broker.history]
+            plt.plot(data, label=self.names[i])
+        plt.legend()
+        plt.title(f"Portfolio Value")
+        plt.xlabel("Time Step")
+        plt.ylabel("Portfolio Value")
+        plt.grid(True)
+        plt.show()
+        
+    def show_stock(self, name, ticker):
+        if len(self.names) == 0:
+            print("ERROR - Please ensure there are valid strategies to backtest")
+            return
+        i = self.names.index(name)
+        self.backtests[i].show_stock(ticker)
+    
+    def show_results(self):
+        if len(self.names) == 0:
+            print("ERROR - Please ensure there are valid strategies to backtest")
+            return
+        results = [ ["","Start [$]","Final [$]","Peak [$]","Profit [$]","Return [%]"] ]
+        for backtest in self.backtests:
+            result = []
+            result.append(backtest.strategy.name)
+            result.append(backtest.start)
+            final = backtest.broker.history[len(backtest.broker.history)-1]["equity"]
+            result.append(final)
+            result.append(max([x["equity"] for x in backtest.broker.history]))
+            result.append(final - backtest.start)
+            result.append(((final - backtest.start)/backtest.start)*100)
+            results.append(result)
+        data = list(zip(*results))
+        spacing = np.max([len(x) for x in data[0]])
+        spacing = max(spacing, 20)
+        
+        formatted = []        
+        for row in data:
+            new_row = []
+            for val in row:
+                if isinstance(val, (float, np.floating, int)):
+                    new_row.append(f"{val:{spacing}.{5}{"g"}}")
+                else:
+                    new_row.append(str(val).ljust(spacing))  # pad strings
+            formatted.append(new_row)
+        
+        tqdm.write("Backtest Complete - Outputting results\n")
+        tqdm.write(" | ".join(formatted[0]) + " |")
+        tqdm.write("-"*spacing + "-|-" + ("-"*spacing + "-+-")*(len(self.names)-1) + "-"*spacing + "-|")
+        for row in formatted[1:]:
+            tqdm.write(" | ".join(row) + " |")

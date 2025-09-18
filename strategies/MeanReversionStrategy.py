@@ -21,6 +21,8 @@ class MeanReversionStrategy(Strategy):
         std = np.std(previous_prices)
         
         #Calculate z-score
+        if std == 0:
+            return
         z = (price - mean)/(std)
         
         #Make trades
