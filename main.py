@@ -17,6 +17,7 @@ backtest.run()
 backtest.show_portfolio()
 backtest.show_stock("MeanReversionStrategy", "SPY")
 backtest.show_stock("BuyAndHoldSPYStrategy", "SPY")
+backtest.show_graph([{"strategy": "PairsTradingStrategy", "variable": "Spread"}])
 
 #Show results of the backtest
 backtest.show_results()

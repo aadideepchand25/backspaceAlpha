@@ -10,6 +10,7 @@ class PairsTradingStrategy(Strategy):
         self.threshold = 2
         self.exit = 0.5
         self.shares = 100
+        super().log("Spread", 0)
     
     def update(self, data):
         #Get close prices
@@ -32,6 +33,7 @@ class PairsTradingStrategy(Strategy):
         
         #Get current spread
         current_spread = cola - (alpha + (beta * pepsi))
+        super().log("Spread", current_spread)
         
         #Calculate Z-score
         if spread_std == 0:
@@ -40,11 +42,11 @@ class PairsTradingStrategy(Strategy):
         
         #Make trades
         if z > self.threshold:
-            self.broker.short("KO", self.shares, "long_order")
-            self.broker.long("PEP", self.shares * beta, "short_order")
+            self.broker.long(self.portfolio[0], self.shares * beta, "short_order")
+            self.broker.short(self.portfolio[1], self.shares, "long_order")
         elif z < -self.threshold:
-            self.broker.long("KO", self.shares, "long_order")
-            self.broker.short("PEP", self.shares * beta, "short_order")
+            self.broker.short(self.portfolio[0], self.shares * beta, "short_order")
+            self.broker.long(self.portfolio[1], self.shares, "long_order")
         elif z < self.exit and z > -self.exit:
             self.broker.close("long_order")
             self.broker.close("short_order")

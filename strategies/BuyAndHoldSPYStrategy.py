@@ -17,7 +17,7 @@ class BuyAndHoldSPYStrategy(Strategy):
             self.shares = self.broker.cash // price
             
             #Buys those shares
-            self.broker.buy("SPY", self.shares)
+            self.broker.buy(self.portfolio[0], self.shares)
 
             #Ensures it is not rerun
             self.once = True

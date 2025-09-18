@@ -23,3 +23,6 @@ class Strategy(ABC):
     @abstractmethod
     def update(self, data):
         pass
+    
+    def log(self, name, value):
+        self.broker.log_variable(name, value)

@@ -20,6 +20,7 @@ class Broker:
         self.hedging = hedging
         self.time = 0
         self.first = True
+        self.extra_logs = {}
         if not verbose:
             import builtins
             builtins.print = lambda *args, **kwargs: None
@@ -197,11 +198,19 @@ class Broker:
                     val += p[1] * price
             value.append(val)
         return np.array(value)
+    
+    def log_variable(self, name, value):
+        if name in ["equity", "portfolio", "current", "orders"]:
+            print("ERROR: Invalid variable name")
+            return
+        self.extra_logs[name] = value
 
     def log(self):
-        self.history.append({
+        base_log = {
             'equity': self.cash + sum(self.value()),
             'portfolio': self.open_value(),
             'current': [self.price[t] for t in self.tickers],
             'orders': self.order
-        })
+        }
+        base_log.update(self.extra_logs)
+        self.history.append(base_log)

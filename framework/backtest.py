@@ -21,12 +21,12 @@ class BackTest:
         self.start = start
         self.strategy = strategy
         self.verbose = verbose
-        self.strategy.init()
         self.portfolio = self.strategy.portfolio
         self.broker = Broker(self.portfolio, start, verbose=verbose, hedging=hedging)
         self.strategy.broker = self.broker
         self.feed = MultiDataFeed(self.portfolio, time_frame, source, interval)
         self.strategy.feed = self.feed
+        self.strategy.init()
     
     def run(self, pbar = None):
         '''
@@ -140,6 +140,9 @@ class MultiBackTest:
         end_dt   = datetime.strptime(time_frame[1], '%Y-%m-%d')
         delta_days = (end_dt - start_dt).days
         self.years = delta_days / 365.25
+        if self.years <= 0:
+            print("ERROR - Please ensure that a valid timeframe has been inputted")
+            return
     
     def run(self):
         if len(self.names) == 0:
@@ -173,9 +176,36 @@ class MultiBackTest:
         if len(self.names) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")
             return
+        if name not in names:
+            print("ERROR - Please ensure the given strategy was present in the backtest")
+            return
         i = self.names.index(name)
+        if ticker not in self.backtests[i].portfolio:
+            print("ERROR - Please ensure the given ticker is present in the strategy portfolio")
+            return
         self.backtests[i].show_stock(ticker)
-    
+        
+    def show_graph(self, variable_names):
+        plt.figure(figsize=(10, 5))
+        name = ""
+        for variable in variable_names:
+            if variable["strategy"] not in names:
+                print("ERROR - Please ensure the given strategy was present in the backtest")
+                return
+            i = self.names.index(variable["strategy"])
+            if variable["variable"] not in self.backtests[i].broker.history[0]:
+                print("ERROR - Please ensure the given variable was present in the strategy")
+                return
+            data = [x[variable["variable"]] for x in self.backtests[i].broker.history]
+            name += f"{self.names[i]} ({variable["variable"]}), "
+            plt.plot(data, label=f"{self.names[i]} ({variable["variable"]})")
+        plt.legend()
+        plt.title(name[:-2])
+        plt.xlabel("Time Step")
+        plt.ylabel("Value")
+        plt.grid(True)
+        plt.show()
+
     def show_results(self):
         if len(self.names) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")

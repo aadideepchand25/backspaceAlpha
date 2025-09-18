@@ -27,9 +27,9 @@ class MeanReversionStrategy(Strategy):
         
         #Make trades
         if z > self.threshold:
-            self.broker.short("SPY", self.shares, "short_order")
+            self.broker.short(self.portfolio[0], self.shares, "short_order")
         elif z < -self.threshold:
-            self.broker.long("SPY", self.shares, "long_order")
+            self.broker.long(self.portfolio[0], self.shares, "long_order")
         elif z < self.exit and z > -self.exit:
             self.broker.close("short_order")
             self.broker.close("long_order")
