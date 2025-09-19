@@ -1,4 +1,5 @@
 from backspaceAlpha.framework import BackTest
+from backspaceAlpha.functions import RollingDrawdown, RollingSharpeRatio
 from backspaceAlpha.examples import PairsTradingStrategy, MeanReversionStrategy, BuyAndHoldSPYStrategy
 
 '''
@@ -8,16 +9,18 @@ Can process a backtest of 5 years on a 1 day timeframe in about a few seconds wi
 
 #Run the backtest on multiple strategies simultaneously
 strategies = [PairsTradingStrategy(),MeanReversionStrategy(),BuyAndHoldSPYStrategy()]
-backtest = BackTest(strategies, ('2000-01-01', '2025-01-01'), 10000, "YAHOO", "1D", verbose=False)
+backtest = BackTest(strategies, ('2000-01-01', '2025-01-01'), 10000, "YAHOO", "1W", verbose=False)
 backtest.run()
 
 #Show graphs for the results of the backtest
-backtest.show_graph("Portfolio Equity", {
+backtest.graph_variable("Portfolio Equity", {
     "strategy": ["PairsTradingStrategy", "MeanReversionStrategy", "BuyAndHoldSPYStrategy"], 
     "variable": "Equity"
 })
-backtest.show_stock("MeanReversionStrategy", "SPY")
-backtest.show_stock("BuyAndHoldSPYStrategy", "SPY")
+backtest.graph_function("Rolling Drawdown", RollingDrawdown, args=[-1])
+backtest.graph_function("Rolling Sharpe Ratio", RollingSharpeRatio, args=[-1])
+backtest.graph_stock("MeanReversionStrategy", "SPY")
+backtest.graph_stock("BuyAndHoldSPYStrategy", "SPY")
 
 #Show results of the backtest
 backtest.show_results()

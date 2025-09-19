@@ -31,7 +31,7 @@ class Broker:
         Function meant to be used by backtest class to feed fresh data to the broker
         Means the broker always has the latest prices
         '''
-        self.rfr = rfr
+        self.rfr = rfr / 100
         self.price = dict(zip(self.tickers, data))
         if self.first:
             self.log()

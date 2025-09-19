@@ -23,8 +23,14 @@ class YahooDataFeed(BaseDataFeed):
     Instance of BaseDataFeed class that uses Yahoo Finance
     Is initialised with a symbol and the timeframe
     '''
-    def __init__(self, symbol, time_frame):
-        data = yf.download(symbol, start=time_frame[0], end=time_frame[1], auto_adjust=True)
+    def __init__(self, symbol, time_frame, interval):
+        if interval == "1D":
+            interval = "1d"
+        elif interval == "1W":
+            interval = "1wk"
+        elif interval == "1M":
+            interval = "1mo"
+        data = yf.download(symbol, start=time_frame[0], end=time_frame[1], interval=interval, auto_adjust=True)
         self.df = data.reset_index(drop=True)
         self.index = 0
         self.length = len(self.df)
@@ -155,13 +161,19 @@ class MultiDataFeed(BaseDataFeed):
     Used for keeping track of an entire portfolio's data feed
     '''
     def __init__(self, portfolio, time_frame, source, interval):
+        if interval not in ["1D", "1W", "1M"]: 
+            print("ERROR - Please ensure that a valid interval has been inputted")
+            return
+        if source not in ["YAHOO"]:
+            print("ERROR - Please ensure that a valid source has been inputted")
+            return
         self.feeds = []
         portfolio = ["^IRX"] + portfolio
         for ticker in portfolio:
             if source == "IBKR":
                 self.feeds.append(IBKRDataFeed(ticker, time_frame, interval))
             elif source == "YAHOO":
-                self.feeds.append(YahooDataFeed(ticker, time_frame))
+                self.feeds.append(YahooDataFeed(ticker, time_frame, interval))
     
     def has_next(self):
         return all(feed.has_next() for feed in self.feeds)  
