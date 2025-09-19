@@ -1,10 +1,5 @@
 import yfinance as yf
 import numpy as np
-from ib_insync import IB, Stock, util
-import pandas as pd
-from datetime import datetime, timedelta
-import asyncio
-import os
 
 class BaseDataFeed:
     '''
@@ -46,13 +41,12 @@ class YahooDataFeed(BaseDataFeed):
         start = max(0, self.index - num)
         sub_df = self.df.iloc[start:self.index]
         return sub_df.to_numpy()
-
+'''
 class IBKRDataFeed(BaseDataFeed):
-    '''
-    WIP:
-    Will be an instance of BaseDataFeed that can fetch data from IBKR. 
-    To be used for intraday behaviour
-    '''
+    #WIP:
+    #Will be an instance of BaseDataFeed that can fetch data from IBKR. 
+    #To be used for intraday behaviour
+    
     def __init__(self, symbol, time_frame, interval, storage_dir='data', host='127.0.0.1', port=7497, client_id=1):
         self.symbol = symbol
         self.start_date = pd.to_datetime(time_frame[0])
@@ -154,7 +148,7 @@ class IBKRDataFeed(BaseDataFeed):
         start = max(0, self.index - num)
         sub_df = self.df.iloc[start:self.index]
         return sub_df[['open', 'high', 'low', 'close', 'volume']].to_numpy()
-
+'''
 class MultiDataFeed(BaseDataFeed):
     '''
     Important instance of the base data feed that is able to keep track of multiple individual feeds
