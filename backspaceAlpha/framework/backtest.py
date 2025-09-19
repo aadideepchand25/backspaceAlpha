@@ -140,6 +140,13 @@ class BackTest:
         end_dt   = datetime.strptime(time_frame[1], '%Y-%m-%d')
         delta_days = (end_dt - start_dt).days
         self.years = delta_days / 365.25
+        if interval == "1D":
+            self.divisor = 252
+        elif interval == "1W":
+            self.divisor = 52
+        elif interval == "1M":
+            self.divisor = 12
+        self.interval = interval
         if self.years <= 0:
             print("ERROR - Please ensure that a valid timeframe has been inputted")
             return
@@ -157,7 +164,7 @@ class BackTest:
         if not self.verbose:
             pbar.close()
     
-    def show_portfolio(self):
+    def graph_portfolio(self):
         '''
         show_graph function is recommended instead as it is more flexible and provides better customisability
         '''
@@ -175,7 +182,7 @@ class BackTest:
         plt.grid(True)
         plt.show()
         
-    def show_stock(self, name, ticker):
+    def graph_stock(self, name, ticker):
         if len(self.names) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")
             return
@@ -188,7 +195,7 @@ class BackTest:
             return
         self.backtests[i].show_stock(ticker)
         
-    def show_graph(self, title, variable_names):
+    def graph_variable(self, title, variable_names):
         plt.figure(figsize=(10, 5))
         variable_names = variable_names if isinstance(variable_names, list) else [variable_names]
         for variable in variable_names:
@@ -216,12 +223,25 @@ class BackTest:
         plt.ylabel("Value")
         plt.grid(True)
         plt.show()
+    
+    def graph_function(self, title, func, args = [], kwargs = {}):
+        plt.figure(figsize=(10, 5))
+        for i in range(len(self.backtests)):
+            data = self.backtests[i].broker.history
+            y = func({"data": data, "interval": self.interval}, *args, **kwargs)
+            plt.plot(y, label=self.names[i])
+        plt.legend()
+        plt.title(title)
+        plt.xlabel("Time Step")
+        plt.ylabel("Value")
+        plt.grid(True)
+        plt.show()
 
     def show_results(self):
         if len(self.names) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")
             return
-        results = [ ["","Start [$]","Final [$]","Peak [$]","Profit [$]","Return [%]", "Return (CAGR) [%]", "Max Drawdown [%]"] ]
+        results = [ ["","Start [$]","Final [$]","Peak [$]","Profit [$]","Return [%]", "Return (Ann.) [%]", "Max Drawdown [%]", "Sharpe Ratio []", "Sharpe Ratio (Ann.) []"] ]
         for backtest in self.backtests:
             result = []
             data = [x["Equity"] for x in backtest.broker.history]
@@ -236,10 +256,18 @@ class BackTest:
             running_max = np.maximum.accumulate(data)
             drawdowns = (data - running_max) / running_max
             result.append(drawdowns.min()*100)
+            returns = np.diff(data) / data[:-1]
+            rf = np.mean([x["Risk-Free Rate"] for x in backtest.broker.history]) / self.divisor
+            if np.std(returns) != 0:
+                sharpe_ratio = (np.mean(returns - rf)) / np.std(returns)
+            else:
+                sharpe_ratio = 0
+            result.append(sharpe_ratio)
+            result.append(sharpe_ratio * np.sqrt(self.divisor))
             results.append(result)
         data = list(zip(*results))
         spacing = np.max([len(x) for x in data[0]])
-        spacing = max(spacing, 20)
+        spacing = max(spacing, 24)
         
         formatted = []        
         for row in data:
