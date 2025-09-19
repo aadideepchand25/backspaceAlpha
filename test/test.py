@@ -12,10 +12,12 @@ backtest = BackTest(strategies, ('2000-01-01', '2025-01-01'), 10000, "YAHOO", "1
 backtest.run()
 
 #Show graphs for the results of the backtest
-backtest.show_portfolio()
+backtest.show_graph("Portfolio Equity", {
+    "strategy": ["PairsTradingStrategy", "MeanReversionStrategy", "BuyAndHoldSPYStrategy"], 
+    "variable": "Equity"
+})
 backtest.show_stock("MeanReversionStrategy", "SPY")
 backtest.show_stock("BuyAndHoldSPYStrategy", "SPY")
-backtest.show_graph([{"strategy": "PairsTradingStrategy", "variable": "Spread"}])
 
 #Show results of the backtest
 backtest.show_results()

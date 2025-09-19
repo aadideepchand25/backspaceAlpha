@@ -156,6 +156,7 @@ class MultiDataFeed(BaseDataFeed):
     '''
     def __init__(self, portfolio, time_frame, source, interval):
         self.feeds = []
+        portfolio = ["^IRX"] + portfolio
         for ticker in portfolio:
             if source == "IBKR":
                 self.feeds.append(IBKRDataFeed(ticker, time_frame, interval))
@@ -169,11 +170,11 @@ class MultiDataFeed(BaseDataFeed):
         out = np.zeros((len(self.feeds), 5))
         for i, feed in enumerate(self.feeds):
             out[i, :] = feed.next()
-        return out
+        return out[1:], out[0,3]
             
     def previous(self, num):
         a = min(min([x.index for x in self.feeds]),num)
         out = np.zeros((len(self.feeds), a, 5))
         for i, feed in enumerate(self.feeds):
             out[i,:,:] = feed.previous(a)
-        return out
+        return out[1:]

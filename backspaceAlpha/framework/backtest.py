@@ -39,8 +39,8 @@ class BaseBackTest:
         if not self.verbose and pbar is None:
             pbar = tqdm(total=self.feed.feeds[0].length, ncols=70, desc="Running Backtest")
         while self.feed.has_next():
-            data = self.feed.next()
-            self.broker.update_price(data[:,3])
+            data, rfr = self.feed.next()
+            self.broker.update_price(data[:,3], rfr)
             self.strategy.update(data)
             self.broker.update()
             if not self.verbose:
@@ -50,7 +50,7 @@ class BaseBackTest:
     
             
     def show_portfolio(self):
-        data = [x["equity"] for x in self.broker.history]
+        data = [x["Equity"] for x in self.broker.history]
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(data)
         formatter = ScalarFormatter(useOffset=False)
@@ -62,7 +62,7 @@ class BaseBackTest:
         plt.show()
         
     def show_portfolio_distribution(self):
-        data = [x["portfolio"] for x in self.broker.history]
+        data = [x["Portfolio"] for x in self.broker.history]
         data = np.array(data)
         plt.figure(figsize=(10, 5))
         for i in range(data.shape[1]):
@@ -124,7 +124,7 @@ class BaseBackTest:
     def show_results(self):
         final = self.broker.history[len(self.broker.history)-1]
         tqdm.write(f"\n\nRESULTS - {self.strategy.name}:")
-        tqdm.write(f"Profit: £{final['equity']-self.start}")
+        tqdm.write(f"Profit: £{final['Equity']-self.start}")
         
 class BackTest:
     def __init__(self, strategy: [Strategy], time_frame, start=10000, source="YAHOO", interval="1D", verbose=True, hedging=False):
@@ -158,12 +158,15 @@ class BackTest:
             pbar.close()
     
     def show_portfolio(self):
+        '''
+        show_graph function is recommended instead as it is more flexible and provides better customisability
+        '''
         if len(self.names) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")
             return
         plt.figure(figsize=(10, 5))
         for i in range(len(self.backtests)):
-            data = [x["equity"] for x in self.backtests[i].broker.history]
+            data = [x["Equity"] for x in self.backtests[i].broker.history]
             plt.plot(data, label=self.names[i])
         plt.legend()
         plt.title(f"Portfolio Value")
@@ -185,22 +188,30 @@ class BackTest:
             return
         self.backtests[i].show_stock(ticker)
         
-    def show_graph(self, variable_names):
+    def show_graph(self, title, variable_names):
         plt.figure(figsize=(10, 5))
-        name = ""
+        variable_names = variable_names if isinstance(variable_names, list) else [variable_names]
         for variable in variable_names:
-            if variable["strategy"] not in self.names:
-                print("ERROR - Please ensure the given strategy was present in the backtest")
+            if isinstance(variable["strategy"], str):
+                variable["strategy"] = [variable["strategy"]]
+            if isinstance(variable["variable"], str):
+                variable["variable"] = [variable["variable"]]
+            if len(variable["strategy"]) == 0:
+                print("ERROR - Please ensure there are valid strategies to extract data from")
                 return
-            i = self.names.index(variable["strategy"])
-            if variable["variable"] not in self.backtests[i].broker.history[0]:
-                print("ERROR - Please ensure the given variable was present in the strategy")
-                return
-            data = [x[variable["variable"]] for x in self.backtests[i].broker.history]
-            name += f"{self.names[i]} ({variable["variable"]}), "
-            plt.plot(data, label=f"{self.names[i]} ({variable["variable"]})")
+            for name in variable["strategy"]:
+                if name not in self.names:
+                    print("ERROR - Please ensure the given strategy was present in the backtest")
+                    return
+                i = self.names.index(name)
+                for variableName in variable["variable"]:
+                    if variableName not in self.backtests[i].broker.history[0]:
+                        print("ERROR - Please ensure the given variable was present in the strategy")
+                        return
+                    data = [x[variableName] for x in self.backtests[i].broker.history]
+                    plt.plot(data, label=f"{name} ({variableName})")
         plt.legend()
-        plt.title(name[:-2])
+        plt.title(title)
         plt.xlabel("Time Step")
         plt.ylabel("Value")
         plt.grid(True)
@@ -213,7 +224,7 @@ class BackTest:
         results = [ ["","Start [$]","Final [$]","Peak [$]","Profit [$]","Return [%]", "Return (CAGR) [%]", "Max Drawdown [%]"] ]
         for backtest in self.backtests:
             result = []
-            data = [x["equity"] for x in backtest.broker.history]
+            data = [x["Equity"] for x in backtest.broker.history]
             result.append(backtest.strategy.name)
             result.append(backtest.start)
             final = data[len(backtest.broker.history)-1]

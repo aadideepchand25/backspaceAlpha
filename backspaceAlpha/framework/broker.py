@@ -14,6 +14,7 @@ class Broker:
         self.tickers = portfolio
         self.portfolio = dict.fromkeys(portfolio, 0)
         self.price = dict.fromkeys(portfolio, 0)
+        self.rfr = 0
         self.history = []
         self.order = {ticker: [] for ticker in portfolio}
         self.open = {ticker: [] for ticker in portfolio}
@@ -25,11 +26,12 @@ class Broker:
             import builtins
             builtins.print = lambda *args, **kwargs: None
             
-    def update_price(self, data):
+    def update_price(self, data, rfr):
         '''
         Function meant to be used by backtest class to feed fresh data to the broker
         Means the broker always has the latest prices
         '''
+        self.rfr = rfr
         self.price = dict(zip(self.tickers, data))
         if self.first:
             self.log()
@@ -200,17 +202,18 @@ class Broker:
         return np.array(value)
     
     def log_variable(self, name, value):
-        if name in ["equity", "portfolio", "current", "orders"]:
+        if name in ["Equity", "Portfolio", "current", "orders", "Risk-Free Rate"]:
             print("ERROR: Invalid variable name")
             return
         self.extra_logs[name] = value
 
     def log(self):
         base_log = {
-            'equity': self.cash + sum(self.value()),
-            'portfolio': self.open_value(),
+            'Equity': self.cash + sum(self.value()),
+            'Portfolio': self.open_value(),
             'current': [self.price[t] for t in self.tickers],
-            'orders': self.order
+            'orders': self.order,
+            'Risk-Free Rate': self.rfr
         }
         base_log.update(self.extra_logs)
         self.history.append(base_log)
