@@ -202,7 +202,7 @@ class Broker:
         return np.array(value)
     
     def log_variable(self, name, value):
-        if name in ["Equity", "Portfolio", "current", "orders", "Risk-Free Rate"] or name[:1] == "-":
+        if name in ["Equity", "Portfolio", "current", "orders", "Risk-Free Rate", ""] or name[:2] == "--":
             print("ERROR: Invalid variable name")
             return
         self.extra_logs[name] = value

@@ -196,13 +196,16 @@ class BackTest:
                             return
                         ticker = variableName[8:-1].split(")(")[0]
                         variable = variableName[8:-1].split(")(")[1]
-                        if variable not in self.backtests[i].broker.history[0]:
+                        if variable not in self.backtests[i].broker.history[0] and variable != "":
                             print("ERROR - Please ensure the given anchor variable was present in the strategy")
                             return
-                        anchor = [x[variable] for x in self.backtests[i].broker.history]
                         orders = enumerate([x['orders'][ticker] for x in self.backtests[i].broker.history])
                         idx = self.backtests[i].portfolio.index(ticker)
                         data = [x["current"][idx] for x in self.backtests[i].broker.history]
+                        if variable != "":
+                            anchor = [x[variable] for x in self.backtests[i].broker.history]
+                        else:
+                            anchor = data
                         open = {}
                         distance = 0.2
                         for t, a in orders:
@@ -214,29 +217,32 @@ class BackTest:
                                 
                                 if order[0] == "LNG" or order[0] == "SHT":
                                     open[order[2]] = (t,order[0],order[5]) 
+                                    continue
                                     
                                 if order[0] == "CLS":
                                     start, action, price = open[order[1]]
                                     if action == "LNG":
-                                        plt.plot([start, t], [anchor[t], anchor[t]], linestyle='--', color='green', linewidth=1.5)  
+                                        plt.plot([start, t], [anchor[start], anchor[start]], linestyle='--', color='green', linewidth=1.5)  
                                         if data[t] > price:
-                                            plt.scatter(t, anchor[t]-distance, marker='^', color='green', s=100) 
+                                            plt.scatter(t, anchor[start]-distance, marker='^', color='green', s=100) 
                                         else:
-                                            plt.scatter(t, anchor[t]+distance, marker='v', color='red', s=100)     
+                                            plt.scatter(t, anchor[start]+distance, marker='v', color='red', s=100)     
                                     else:
-                                        plt.plot([start, t], [anchor[t], anchor[t]], linestyle='--', color='red', linewidth=1.5)  
+                                        plt.plot([start, t], [anchor[start], anchor[start]], linestyle='--', color='red', linewidth=1.5)  
                                         if data[t] < price:
-                                            plt.scatter(t, anchor[t]+distance, marker='v', color='green', s=100) 
+                                            plt.scatter(t, anchor[start]+distance, marker='v', color='green', s=100) 
                                         else:
-                                            plt.scatter(t, anchor[t]-distance, marker='^', color='red', s=100)
+                                            plt.scatter(t, anchor[start]-distance, marker='^', color='red', s=100)
                                     del open[order[1]]
-                            t = len(data)-1
-                            for id, o in open.items():
-                                start, action, price = o
-                                if action == "LNG":
-                                    plt.plot([start, t], [anchor[t], anchor[t]], linestyle='--', color='gray', linewidth=1.5) 
-                                else: 
-                                    plt.plot([start, t], [anchor[t], anchor[t]], linestyle='--', color='gray', linewidth=1.5)
+                                    continue
+                                
+                        t = len(data)-1
+                        print(open.values())
+                        for start, action, _ in open.values():
+                            if action == "LNG":
+                                plt.plot([start, t], [anchor[start], anchor[start]], linestyle='--', color='gray', linewidth=1.5) 
+                            else: 
+                                plt.plot([start, t], [anchor[start], anchor[start]], linestyle='--', color='gray', linewidth=1.5)
                         continue
                     if variableName not in self.backtests[i].broker.history[0]:
                         print("ERROR - Please ensure the given variable was present in the strategy")
