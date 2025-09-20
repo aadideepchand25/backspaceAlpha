@@ -24,5 +24,5 @@ class Strategy(ABC):
     def update(self, data):
         pass
     
-    def log(self, name, value):
+    def log(self, name, value=None):
         self.broker.log_variable(name, value)

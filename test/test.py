@@ -9,14 +9,16 @@ Can process a backtest of 5 years on a 1 day timeframe in about a few seconds wi
 
 #Run the backtest on multiple strategies simultaneously
 strategies = [PairsTradingStrategy(),MeanReversionStrategy(),BuyAndHoldSPYStrategy()]
-backtest = BackTest(strategies, ('2000-01-01', '2025-01-01'), 10000, "YAHOO", "1W", verbose=False)
-backtest.run()
+backtest = BackTest(strategies, ('2000-01-01', '2025-01-01'), 10000, "YAHOO", "1W", verbose=True)
 
 #Show graphs for the results of the backtest
-backtest.graph_variable("Portfolio Equity", {
-    "strategy": ["PairsTradingStrategy", "MeanReversionStrategy", "BuyAndHoldSPYStrategy"], 
+backtest.graph_variable("Portfolio Equity", [{
+    "strategy": ["PairsTradingStrategy", "MeanReversionStrategy"], 
     "variable": "Equity"
-})
+},{
+    "strategy": ["BuyAndHoldSPYStrategy"], 
+    "variable": ["--order(SPY)(Equity)", "Equity"]
+}])
 backtest.graph_function("Rolling Drawdown", RollingDrawdown, args=[-1])
 backtest.graph_function("Rolling Sharpe Ratio", RollingSharpeRatio, args=[-1])
 backtest.graph_stock("MeanReversionStrategy", "SPY")
