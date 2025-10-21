@@ -48,52 +48,6 @@ class BaseBackTest:
         if not self.verbose and pbar is None:
             pbar.close()
 
-    def show_stock(self, ticker):
-        distance = 0.2
-        i = self.portfolio.index(ticker)
-        data = [x["current"][i] for x in self.broker.history]
-        orders = enumerate([x['orders'][ticker] for x in self.broker.history])
-        open = {}
-        plt.figure(figsize=(10, 5))
-        plt.plot(data)
-        for t, a in orders:
-            for order in a:
-                if order[0] == "B" or order[0] == "LNG":
-                    plt.scatter(t, data[t] - distance, marker='^', color='green', label=order[1], s=100)
-                elif order[0] == "S" or order[0] == "SHT":
-                    plt.scatter(t, data[t] + distance, marker='v', color='red', label=order[1], s=100)
-                   
-                if order[0] == "LNG" or order[0] == "SHT":
-                    open[order[2]] = (t,order[0],order[5]) 
-                    
-                if order[0] == "CLS":
-                    start, action, price = open[order[1]]
-                    if action == "LNG":
-                        plt.plot([start, t], [price, price], linestyle='--', color='green', linewidth=1.5)  
-                        if data[t] > price:
-                            plt.scatter(t, price-distance, marker='^', color='green', s=100) 
-                        else:
-                            plt.scatter(t, price+distance, marker='v', color='red', s=100)     
-                    else:
-                        plt.plot([start, t], [price, price], linestyle='--', color='red', linewidth=1.5)  
-                        if data[t] < price:
-                            plt.scatter(t, price+distance, marker='v', color='green', s=100) 
-                        else:
-                            plt.scatter(t, price-distance, marker='^', color='red', s=100)
-                    del open[order[1]]
-        t = len(data)-1
-        for id, o in open.items():
-            start, action, price = o
-            if action == "LNG":
-                plt.plot([start, t], [price, price], linestyle='--', color='gray', linewidth=1.5) 
-            else: 
-                plt.plot([start, t], [price, price], linestyle='--', color='gray', linewidth=1.5)
-        plt.title(f"Stock Value with Buys/Sells - {ticker}")
-        plt.xlabel("Time Step")
-        plt.ylabel("Stock Value")
-        plt.grid(True)
-        plt.show()
-        
 class BackTest:
     def __init__(self, strategy, time_frame, start=10000, source="YAHOO", interval="1D", verbose=False, hedging=False):
         self.backtests = []    
@@ -130,41 +84,7 @@ class BackTest:
             backtest.run(pbar)
         if not self.verbose:
             pbar.close()
-    
-    def graph_portfolio(self):
-        '''
-        show_graph function is recommended instead as it is more flexible and provides better customisability
-        '''
-        if len(self.names) == 0:
-            print("ERROR - Please ensure there are valid strategies to backtest")
-            return
-        plt.figure(figsize=(10, 5))
-        for i in range(len(self.backtests)):
-            data = [x["Equity"] for x in self.backtests[i].broker.history]
-            plt.plot(data, label=self.names[i])
-        plt.legend()
-        plt.title(f"Portfolio Value")
-        plt.xlabel("Time Step")
-        plt.ylabel("Portfolio Value")
-        plt.grid(True)
-        plt.show()
-        
-    def graph_stock(self, name, ticker):
-        '''
-        show_graph function is recommended instead as it is more flexible and provides better customisability
-        '''
-        if len(self.names) == 0:
-            print("ERROR - Please ensure there are valid strategies to backtest")
-            return
-        if name not in self.names:
-            print("ERROR - Please ensure the given strategy was present in the backtest")
-            return
-        i = self.names.index(name)
-        if ticker not in self.backtests[i].portfolio:
-            print("ERROR - Please ensure the given ticker is present in the strategy portfolio")
-            return
-        self.backtests[i].show_stock(ticker)
-        
+
     def graph_variable(self, title, variable_names):
         plt.figure(figsize=(10, 5))
         variable_names = variable_names if isinstance(variable_names, list) else [variable_names]

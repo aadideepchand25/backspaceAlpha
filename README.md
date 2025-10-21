@@ -10,8 +10,13 @@ A simple, customisable, easy-to-use backtesting framework with example strategie
 2. [Installation](#2-installation)
 3. [Usage](#3-usage)
 4. [Documentation](#4-documentation)
-    1. [Framework](#4.1-framework)
-    2. [Functions](#4.2-functions)
+    1. [Framework](#41---framework)
+        1. [backtest.py](#411---backtestpy)
+        2. [broker.py](#412---brokerpy)
+        3. [loader.py](#413---loaderpy)
+        4. [strategy.py](#414---strategypy)
+    2. [Functions](#42---functions)
+5. [Attribution](#5-attribution)
 
 
 
@@ -68,9 +73,57 @@ In this section, we go in depth into the workings of the backtester and how each
 ### 4.1 - Framework
 This section includes scripts with the main functionality of the backtester. It is split into different scripts in the same way discussed in the [overview](#1-overview))
 
-### 4.2 - Functions
+#### 4.1.1 - backtest.py
+This module can be imported into the project using:
+```python
+from backspaceAlpha.framework import *
+```
+This script defines two main classes that are both used to run the backtest effectively. It also handles the versatile graphing functions which allow for practically any variable to be plotted and any graph to be created. It brings together all other classes.
 
-## Attribution
+**Imports** `MultiDataFeed`, `Broker`, `Strategy`, `matplotlib`, `numpy`, `tqdm`, `datetime`
+
+**Classes** `BaseBackTest`, `BackTest`
+
+---
+`BaseBackTest`
+
+The internal engine that actually runs the backtest. It handles a single strategy and only is capable of running one backtest. It simulates the whole trading environment and each tick realistically before outputting logs.
+
+**Constructor**
+
+Initialises the backtest and all classes that are needed to make it run. Also intialises the strategy.
+```python
+BaseBackTest(strategy, time_frame, start=10000, source="YAHOO", interval="1D", verbose=False, hedging=False)
+```
+- `strategy` - `Strategy`: This is the strategy that the backtest will run on
+- `time_frame` - `(YYYY-MM-DD, YYYY-MM-DD)`: This is the time frame on which the backtest will run on where the first element of the tuple is the start date, and the last element, the end date
+- `start` - (optional) `float`: This is the amount of money the strategy will start with
+- `source` - (optional) `str`: This is the source from where the data is pulled (only current working option is `YAHOO`)
+- `interval` - (optional) `str`: This is how often the strategy is to be run. Can choose from `1D`, `1W` and `1M` for daily, weekly and monthly respectively
+- `verbose` - (optional) `bool`: Turning this on causes the broker to log updates to console every tick. Useful for debugging strategies and shows all orders and how they were handled that tick
+- `hedging` - (optional) `bool`: Turning this on causes the broker to simulate a broker which allows hedging. This means certain order conflicts are handled differently (and generally more leniently)
+
+**run**
+
+Heart of the backtest and run it with the basic loop: Updates data feed by 1 tick, sends new data to broker first, then sends same data to strategy, allows broker to respond to new orders from strategy
+```python
+run(pbar = None)
+```
+- `pbar` - (optional) `tqdm`: If the current backtest is part of a series of backtests that is being run on different strategies, the progress of the backtest is updated on the progress bar given in the parameter. This allows for the progress bar to show the progress of a backtest on multiple strategies more effectively
+
+---
+`BackTest`
+
+This is the main class to be used when running any backtest. It makes use of the `BaseBackTest` class
+
+#### 4.1.2 - broker.py
+#### 4.1.3 - loader.py
+#### 4.1.4 - strategy.py
+
+### 4.2 - Functions
+This section includes a certain type of script, called functions, that can be used with [graph_function](). These are used for more complex graphs that require access to the whole log.
+
+## 5. Attribution
 This software is licensed under the **[BackspaceAlpha License v1.0](https://github.com/aadideepchand25/backspaceAlpha/blob/main/LICENSE)**.  
 Use of this software requires attribution
 Modifications must be submitted via the official GitHub repository.
