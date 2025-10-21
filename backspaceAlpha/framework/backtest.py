@@ -95,9 +95,10 @@ class BaseBackTest:
         plt.show()
         
 class BackTest:
-    def __init__(self, strategy: [Strategy], time_frame, start=10000, source="YAHOO", interval="1D", verbose=True, hedging=False):
+    def __init__(self, strategy, time_frame, start=10000, source="YAHOO", interval="1D", verbose=False, hedging=False):
         self.backtests = []    
         self.verbose = verbose    
+        strategy = strategy if isinstance(strategy, list) else [strategy]
         for strat in strategy:
             self.backtests.append(BaseBackTest(strat, time_frame, start, source, interval, verbose, hedging))
         self.names = [x.strategy.name for x in self.backtests]
