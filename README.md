@@ -180,12 +180,10 @@ Hopefully the above demonstrates how powerful this function can be and provides 
     * `Risk-Free Rate` - Variable containing the RFR on that day based on treasury bills
     * `--ticker()` - Special variable that allows you to plot the price of a ticker. The only argument is the ticker code (eg. `--ticker(AAPL)`)
     * `--order()()` - Special variable that allows you to plot the orders. The first argument is which ticker you want to log the orders for and the second argument, is what variable, you want the order markers to be plotted on. (eg. `--order(SPY)(Equity)`). There are 4 main actions represrented by this function:
-        * Buy
-        * Sell
-        * Long
-        * Short
-
-
+        * Buy: Represented by a green upwards arrow when asset is bought
+        * Sell: Represented by a red downwards arrow when asset is sold
+        * Long: Represented by a green upwards arrow when the long position is initiated. A dashed line starts from this arrow and continues until the position is closed. Another arrow is positioned at the close time and points in the direction of the stock. It will be green if the position made money, and red if it didn't
+        * Short: Represented by a red downwards arrow when the short position is initiated. A dashed line starts from this arrow and continues until the position is closed. Another arrow is positioned at the close time and points in the direction of the stock. It will be green if the position made money, and red if it didn't.
 
 #### 4.1.2 - broker.py
 #### 4.1.3 - loader.py
