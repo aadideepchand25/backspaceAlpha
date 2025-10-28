@@ -186,6 +186,29 @@ Hopefully the above demonstrates how powerful this function can be and provides 
         * Short: Represented by a red downwards arrow when the short position is initiated. A dashed line starts from this arrow and continues until the position is closed. Another arrow is positioned at the close time and points in the direction of the stock. It will be green if the position made money, and red if it didn't.
 
 #### 4.1.2 - broker.py
+This module can be imported into the project using:
+```python
+from backspaceAlpha.broker import *
+```
+This script defines the broker class which acts like a real-life broker. It takes in data from a `Loader` (exchange) and uses it to set prices for assets. Strategies can then interact with it by calling its numerous functions. It then updates its order books and can keep track of any open positions. It also allows strategies to use stop-losses and take-profits
+
+**Imports** `numpy`
+
+**Classes** `Broker`
+
+---
+`Broker`
+
+This class is used to initiate the broker and gives access to all its features. It is automatically loaded in with strategies so that strategies can access it and its features using `self.broker`
+
+**Constructor**
+
+Used to initialise the broker and determine what kind of broker it is. It allows for hedging and for alerts in the terminal everytime orders are handled. Also sets up the order books and prepares the logs for incoming data. 
+
+```python
+Broker(portfolio, initial, hedging = False, verbose = True)
+```
+
 #### 4.1.3 - loader.py
 #### 4.1.4 - strategy.py
 
