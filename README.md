@@ -114,7 +114,78 @@ run(pbar = None)
 ---
 `BackTest`
 
-This is the main class to be used when running any backtest. It makes use of the `BaseBackTest` class
+This is the main class to be used when running any backtest. It makes use of the `BaseBackTest` class to run multiple strategies simultaneously and provides additional functions for showing results.
+
+**Constructor**
+
+Initialises the backtest, the loading bar and all classes that are needed to make it run. Also intialises the strategy. Once everything is intialised, it proceeds to run the backtest on all available strategies
+
+```python
+BackTest(strategy, time_frame, start=10000, source="YAHOO", interval="1D", verbose=False, hedging=False)
+```
+- `strategy` - `Strategy`: This is the strategy that the backtest will run on
+- `time_frame` - `(YYYY-MM-DD, YYYY-MM-DD)`: This is the time frame on which the backtest will run on where the first element of the tuple is the start date, and the last element, the end date
+- `start` - (optional) `float`: This is the amount of money the strategy will start with
+- `source` - (optional) `str`: This is the source from where the data is pulled (only current working option is `YAHOO`)
+- `interval` - (optional) `str`: This is how often the strategy is to be run. Can choose from `1D`, `1W` and `1M` for daily, weekly and monthly respectively
+- `verbose` - (optional) `bool`: Turning this on causes the broker to log updates to console every tick. Useful for debugging strategies and shows all orders and how they were handled that tick
+- `hedging` - (optional) `bool`: Turning this on causes the broker to simulate a broker which allows hedging. This means certain order conflicts are handled differently (and generally more leniently)
+
+**graph_variable**
+
+This versatile function is used to graph any variable created, used or accessed in the backtest against time using matplotlib. There are many built in variables that can be used but users can also create their own variables to graph too using `strategy.log()`.
+
+```python
+graph_variable(title, variable_names):
+```
+
+- `title` - `str`: This will be the title of the graph being made
+- `variable_names` - `[{strategy: [Strategy, ...], variable: [str, ...]}, ...]`: This is a powerful parameter that allows you to quickly log any variable from any strategy. It can be used with or without the use of arrays as the numerous valid examples below:
+
+```python
+#Single strategy with single variable
+graph_variable("1", {strategy: "MyStrategy", variable: "Equity"})
+
+#Single strategy with multiple variables
+graph_variable("2", {strategy: "MyStrategy", variable: ["Equity", "Risk-Free Rate"]})
+
+#Multiple strategies with different variables
+graph_variable("3", [
+    {strategy: "MyStrategy1", variable: "Equity"},
+    {strategy: "MyStrategy2", variable: "Portfolio"}
+])
+
+#Multiple strategies with multiple different variables
+graph_variable("4", [
+    {strategy: "MyStrategy1", variable: ["Equity", "Risk-Free Rate"]},
+    {strategy: "MyStrategy2", variable: "Portfolio"}
+])
+
+#Multiple strategies with the same single variable
+graph_variable("5", {strategy: ["MyStrategy1", "MyStrategy2"], variable: "Equity"})
+
+#Combination
+graph_variable("Combination", [
+    {strategy: ["MyStrategy1", "MyStrategy2"], variable: "Equity"},
+    {strategy: "MyStrategy1", variable: "Portfolio"},
+])
+```
+
+Hopefully the above demonstrates how powerful this function can be and provides a good understanding of how to format parameters for the function. For each `{strategy: "", variable: ""}` object, there are restrictions on what values they can take.
+
+*  `strategy` - The given strategy name(s) has to be of a strategy present in the backtest object that `graph_variable` is being called from
+* `variable` - The given variable name(s) has to be present in all the strategies in the `strategy` part of the object. There are some built in values (case-sensitive) that can be used for this
+    * `Equity` - Variable containing the equity of the portolfio
+    * `Portfolio` - Variable containing the value of open positions
+    * `Risk-Free Rate` - Variable containing the RFR on that day based on treasury bills
+    * `--ticker()` - Special variable that allows you to plot the price of a ticker. The only argument is the ticker code (eg. `--ticker(AAPL)`)
+    * `--order()()` - Special variable that allows you to plot the orders. The first argument is which ticker you want to log the orders for and the second argument, is what variable, you want the order markers to be plotted on. (eg. `--order(SPY)(Equity)`). There are 4 main actions represrented by this function:
+        * Buy
+        * Sell
+        * Long
+        * Short
+
+
 
 #### 4.1.2 - broker.py
 #### 4.1.3 - loader.py
