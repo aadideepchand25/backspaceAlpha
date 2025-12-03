@@ -1,7 +1,8 @@
 import yfinance as yf
 import numpy as np
+from abc import ABC, abstractmethod
 
-class BaseDataFeed:
+class BaseDataFeed(ABC):
     '''
     Basic class used to define what a datafeed should be capable of doing.
     Based on a Java Iterator class and includes the functions:
@@ -9,14 +10,21 @@ class BaseDataFeed:
     - next(): used to return the next element and move data feed along
     - previous(): used to return previous elements (can be multiple)
     '''
+    @abstractmethod
+    def __init__(self, symbol, time_frame, interval):
+        pass
+
+    @abstractmethod
     def has_next(self):
-        raise NotImplementedError
+        pass
     
+    @abstractmethod
     def next(self):
-        raise NotImplementedError
+        pass
     
+    @abstractmethod
     def previous(self):
-        raise NotImplementedError
+        pass
 
 class YahooDataFeed(BaseDataFeed):
     '''
@@ -160,7 +168,7 @@ class MultiDataFeed(BaseDataFeed):
     Important instance of the base data feed that is able to keep track of multiple individual feeds
     Used for keeping track of an entire portfolio's data feed
     '''
-    def __init__(self, portfolio, time_frame, source, interval):
+    def __init__(self, portfolio, time_frame, source, interval, loader=None):
         if interval not in ["1D", "1W", "1M"]: 
             print("ERROR - Please ensure that a valid interval has been inputted")
             return
@@ -170,6 +178,8 @@ class MultiDataFeed(BaseDataFeed):
         self.feeds = []
         portfolio = ["^IRX"] + portfolio
         for ticker in portfolio:
+            if loader is not None:
+                self.feeds.append(loader(ticker, time_frame, interval))
             if source == "IBKR":
                 self.feeds.append(IBKRDataFeed(ticker, time_frame, interval))
             elif source == "YAHOO":

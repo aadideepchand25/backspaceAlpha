@@ -203,11 +203,15 @@ This class is used to initiate the broker and gives access to all its features. 
 
 **Constructor**
 
-Used to initialise the broker and determine what kind of broker it is. It allows for hedging and for alerts in the terminal everytime orders are handled. Also sets up the order books and prepares the logs for incoming data. 
+Used to initialise the broker and determine what kind of broker it is. It allows for hedging and for alerts in the terminal everytime orders are handled. Also sets up the order books and prepares the logs for incoming data. Keeps track of cash as well and intitliases it with intial cash value
 
 ```python
 Broker(portfolio, initial, hedging = False, verbose = True)
 ```
+- `portfolio` - `[str]`: A list of tickers, whose price data needs to be tracked. This variable is normally handled and formatted by the `Strategy` class
+- `intitial` - `float`: The initial value of the portfolio in cash
+- `hedging` - (optional) `bool`: Automatically set to False. When enabled, allows for certain order combinations to be passed through like longing and shorting or other conflicting orders on the same stock. 
+- `verbose` - (optional) `bool`: Automatically 
 
 #### 4.1.3 - loader.py
 #### 4.1.4 - strategy.py
