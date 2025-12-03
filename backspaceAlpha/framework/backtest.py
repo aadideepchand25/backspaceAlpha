@@ -17,14 +17,14 @@ class BaseBackTest:
     - Overall                               (shows results of the strategy (profit))
     - Will be adding more values and metrics soon...
     '''
-    def __init__(self, strategy: Strategy, time_frame, start=10000, source="YAHOO", interval="1D", verbose=True, hedging=False):
+    def __init__(self, strategy: Strategy, time_frame, start=10000, source="YAHOO", interval="1D", verbose=True, hedging=False, feed=None):
         self.start = start
         self.strategy = strategy
         self.verbose = verbose
         self.portfolio = self.strategy.portfolio
         self.broker = Broker(self.portfolio, start, verbose=verbose, hedging=hedging)
         self.strategy.broker = self.broker
-        self.feed = MultiDataFeed(self.portfolio, time_frame, source, interval)
+        self.feed = MultiDataFeed(self.portfolio, time_frame, source, interval, feed)
         self.strategy.feed = self.feed
         self.strategy.init()
     
@@ -49,12 +49,12 @@ class BaseBackTest:
             pbar.close()
 
 class BackTest:
-    def __init__(self, strategy, time_frame, start=10000, source="YAHOO", interval="1D", verbose=False, hedging=False):
+    def __init__(self, strategy, time_frame, start=10000, source="YAHOO", interval="1D", verbose=False, hedging=False, feed=None):
         self.backtests = []    
         self.verbose = verbose    
         strategy = strategy if isinstance(strategy, list) else [strategy]
         for strat in strategy:
-            self.backtests.append(BaseBackTest(strat, time_frame, start, source, interval, verbose, hedging))
+            self.backtests.append(BaseBackTest(strat, time_frame, start, source, interval, verbose, hedging, feed))
         self.names = [x.strategy.name for x in self.backtests]
         if len(strategy) == 0:
             print("ERROR - Please ensure there are valid strategies to backtest")
