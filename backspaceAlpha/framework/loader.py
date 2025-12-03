@@ -6,6 +6,7 @@ class BaseDataFeed(ABC):
     '''
     Basic class used to define what a datafeed should be capable of doing.
     Based on a Java Iterator class and includes the functions:
+    - __init__(): should take a symbol, time_frame and interval
     - has_next(): used to check if there is still more data
     - next(): used to return the next element and move data feed along
     - previous(): used to return previous elements (can be multiple)
